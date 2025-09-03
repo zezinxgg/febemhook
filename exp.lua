@@ -173,10 +173,6 @@ local function createEsp(player)
     espCache[player] = drawings
 end
 
--- // Serviços
-local wsp = game:GetService("Workspace")
-local UIS = game:GetService("UserInputService")
--- Config
 local freeCamSettings = {
     enabled = false,
     speed = 50, -- Velocidade de movimento
@@ -187,29 +183,26 @@ local freeCamPart = nil
 local freeCamConnection = nil
 local moveDirection = Vector3.new(0, 0, 0)
 local savedPosition = nil
-local basePart = nil
 
--- Cria Part e trava câmera nela
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local wsp = workspace
+
+local localPlayer = Players.LocalPlayer
+
+-- Ativa FreeCam
 local function enableFreeCam()
     if freeCamConnection then return end
     if not localPlayer.Character or not localPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
 
-    -- Salva a posição atual do player
+    -- Salva a posição inicial
     savedPosition = localPlayer.Character.HumanoidRootPart.CFrame
 
-    -- Cria a base embaixo do player
-    basePart = Instance.new("Part")
-    basePart.Name = "FreeCamBase"
-    basePart.Anchored = true
-    basePart.CanCollide = true
-    basePart.Size = Vector3.new(10, 1, 10)
-    basePart.Position = savedPosition.Position - Vector3.new(0, 20, 0)
-    basePart.Parent = wsp
+    -- Manda o player bem pra baixo do mapa
+    localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(savedPosition.Position - Vector3.new(0, 1000, 0))
 
-    -- Teleporta o player para a base e "tranca" lá
-    localPlayer.Character:MoveTo(basePart.Position + Vector3.new(0, 3, 0))
-
-    -- Cria a part que a câmera vai seguir
+    -- Cria a part da FreeCam
     freeCamPart = Instance.new("Part")
     freeCamPart.Name = freeCamSettings.partName
     freeCamPart.Anchored = true
@@ -219,9 +212,10 @@ local function enableFreeCam()
     freeCamPart.CFrame = wsp.CurrentCamera.CFrame
     freeCamPart.Parent = wsp
 
+    -- Câmera segue a freeCamPart
     wsp.CurrentCamera.CameraSubject = freeCamPart
 
-    -- Atualiza direção de movimento baseado nas teclas
+    -- Controle de movimento
     UIS.InputBegan:Connect(function(input, gpe)
         if gpe then return end
         if input.KeyCode == Enum.KeyCode.W then moveDirection = moveDirection + Vector3.new(0,0,-1) end
@@ -242,7 +236,7 @@ local function enableFreeCam()
         if input.KeyCode == Enum.KeyCode.LeftShift then moveDirection = moveDirection - Vector3.new(0,-1,0) end
     end)
 
-    -- Loop para mover a part
+    -- Loop para mover a câmera
     freeCamConnection = RunService.RenderStepped:Connect(function(deltaTime)
         if freeCamPart then
             local move = wsp.CurrentCamera.CFrame:VectorToWorldSpace(moveDirection) * freeCamSettings.speed * deltaTime
@@ -261,18 +255,15 @@ local function disableFreeCam()
         freeCamPart:Destroy()
         freeCamPart = nil
     end
-    if basePart then
-        basePart:Destroy()
-        basePart = nil
-    end
 
     -- Volta o player pra posição inicial
     if savedPosition and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
         localPlayer.Character.HumanoidRootPart.CFrame = savedPosition
     end
 
+    -- Volta a câmera pro player
     if localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
-        workspace.CurrentCamera.CameraSubject = localPlayer.Character.Humanoid
+        wsp.CurrentCamera.CameraSubject = localPlayer.Character.Humanoid
     end
 end
 
