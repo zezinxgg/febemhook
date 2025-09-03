@@ -200,7 +200,7 @@ local function enableFreeCam()
     savedPosition = localPlayer.Character.HumanoidRootPart.CFrame
 
     -- Manda o player bem pra baixo do mapa
-    localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(savedPosition.Position - Vector3.new(0, 1000, 0))
+    localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(savedPosition.Position - Vector3.new(0, 100, 0))
 
     -- Cria a part da FreeCam
     freeCamPart = Instance.new("Part")
