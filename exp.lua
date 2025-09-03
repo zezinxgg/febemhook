@@ -189,8 +189,6 @@ local moveDirection = Vector3.new(0, 0, 0)
 local savedPosition = nil
 local basePart = nil
 
-local localPlayer = Players.LocalPlayer
-
 -- Cria Part e trava câmera nela
 local function enableFreeCam()
     if freeCamConnection then return end
