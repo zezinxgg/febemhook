@@ -173,7 +173,10 @@ local function createEsp(player)
     espCache[player] = drawings
 end
 
-local freeCamSettings = {
+-- // Serviços
+local wsp = game:GetService("Workspace")
+local UIS = game:GetService("UserInputService")
+-local freeCamSettings = {
     enabled = false,
     speed = 50, -- Velocidade de movimento
     partName = "FreeCamPart"
@@ -184,10 +187,7 @@ local freeCamConnection = nil
 local moveDirection = Vector3.new(0, 0, 0)
 local savedPosition = nil
 
-local Players = game:GetService("Players")
-local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local wsp = workspace
+local inputBeganConn, inputEndedConn
 
 local localPlayer = Players.LocalPlayer
 
@@ -196,13 +196,15 @@ local function enableFreeCam()
     if freeCamConnection then return end
     if not localPlayer.Character or not localPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
 
-    -- Salva a posição inicial
+    moveDirection = Vector3.new(0,0,0) -- sempre reseta
+
+    -- Salva posição inicial
     savedPosition = localPlayer.Character.HumanoidRootPart.CFrame
 
-    -- Manda o player bem pra baixo do mapa
-    localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(savedPosition.Position - Vector3.new(0, 100, 0))
+    -- Manda player bem pra baixo do mapa
+    localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(savedPosition.Position - Vector3.new(0, 1000, 0))
 
-    -- Cria a part da FreeCam
+    -- Cria part da câmera
     freeCamPart = Instance.new("Part")
     freeCamPart.Name = freeCamSettings.partName
     freeCamPart.Anchored = true
@@ -212,11 +214,10 @@ local function enableFreeCam()
     freeCamPart.CFrame = wsp.CurrentCamera.CFrame
     freeCamPart.Parent = wsp
 
-    -- Câmera segue a freeCamPart
     wsp.CurrentCamera.CameraSubject = freeCamPart
 
-    -- Controle de movimento
-    UIS.InputBegan:Connect(function(input, gpe)
+    -- Conexões de input (garante que só cria uma vez)
+    inputBeganConn = UIS.InputBegan:Connect(function(input, gpe)
         if gpe then return end
         if input.KeyCode == Enum.KeyCode.W then moveDirection = moveDirection + Vector3.new(0,0,-1) end
         if input.KeyCode == Enum.KeyCode.S then moveDirection = moveDirection + Vector3.new(0,0,1) end
@@ -226,7 +227,7 @@ local function enableFreeCam()
         if input.KeyCode == Enum.KeyCode.LeftShift then moveDirection = moveDirection + Vector3.new(0,-1,0) end
     end)
 
-    UIS.InputEnded:Connect(function(input, gpe)
+    inputEndedConn = UIS.InputEnded:Connect(function(input, gpe)
         if gpe then return end
         if input.KeyCode == Enum.KeyCode.W then moveDirection = moveDirection - Vector3.new(0,0,-1) end
         if input.KeyCode == Enum.KeyCode.S then moveDirection = moveDirection - Vector3.new(0,0,1) end
@@ -236,7 +237,7 @@ local function enableFreeCam()
         if input.KeyCode == Enum.KeyCode.LeftShift then moveDirection = moveDirection - Vector3.new(0,-1,0) end
     end)
 
-    -- Loop para mover a câmera
+    -- Loop de movimento da câmera
     freeCamConnection = RunService.RenderStepped:Connect(function(deltaTime)
         if freeCamPart then
             local move = wsp.CurrentCamera.CFrame:VectorToWorldSpace(moveDirection) * freeCamSettings.speed * deltaTime
@@ -251,17 +252,21 @@ local function disableFreeCam()
         freeCamConnection:Disconnect()
         freeCamConnection = nil
     end
+    if inputBeganConn then inputBeganConn:Disconnect() inputBeganConn = nil end
+    if inputEndedConn then inputEndedConn:Disconnect() inputEndedConn = nil end
+    moveDirection = Vector3.new(0,0,0)
+
     if freeCamPart then
         freeCamPart:Destroy()
         freeCamPart = nil
     end
 
-    -- Volta o player pra posição inicial
+    -- Volta player
     if savedPosition and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
         localPlayer.Character.HumanoidRootPart.CFrame = savedPosition
     end
 
-    -- Volta a câmera pro player
+    -- Volta câmera pro player
     if localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
         wsp.CurrentCamera.CameraSubject = localPlayer.Character.Humanoid
     end
