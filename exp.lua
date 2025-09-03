@@ -190,8 +190,6 @@ local savedPosition = nil
 
 local inputBeganConn, inputEndedConn
 
-local localPlayer = Players.LocalPlayer
-
 -- Ativa FreeCam
 local function enableFreeCam()
     if freeCamConnection then return end
