@@ -186,11 +186,32 @@ local freeCamSettings = {
 local freeCamPart = nil
 local freeCamConnection = nil
 local moveDirection = Vector3.new(0, 0, 0)
+local savedPosition = nil
+local basePart = nil
+
+local localPlayer = Players.LocalPlayer
 
 -- Cria Part e trava câmera nela
 local function enableFreeCam()
     if freeCamConnection then return end
+    if not localPlayer.Character or not localPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
 
+    -- Salva a posição atual do player
+    savedPosition = localPlayer.Character.HumanoidRootPart.CFrame
+
+    -- Cria a base embaixo do player
+    basePart = Instance.new("Part")
+    basePart.Name = "FreeCamBase"
+    basePart.Anchored = true
+    basePart.CanCollide = true
+    basePart.Size = Vector3.new(10, 1, 10)
+    basePart.Position = savedPosition.Position - Vector3.new(0, 20, 0)
+    basePart.Parent = wsp
+
+    -- Teleporta o player para a base e "tranca" lá
+    localPlayer.Character:MoveTo(basePart.Position + Vector3.new(0, 3, 0))
+
+    -- Cria a part que a câmera vai seguir
     freeCamPart = Instance.new("Part")
     freeCamPart.Name = freeCamSettings.partName
     freeCamPart.Anchored = true
@@ -224,7 +245,7 @@ local function enableFreeCam()
     end)
 
     -- Loop para mover a part
-    freeCamConnection = runService.RenderStepped:Connect(function(deltaTime)
+    freeCamConnection = RunService.RenderStepped:Connect(function(deltaTime)
         if freeCamPart then
             local move = wsp.CurrentCamera.CFrame:VectorToWorldSpace(moveDirection) * freeCamSettings.speed * deltaTime
             freeCamPart.CFrame = freeCamPart.CFrame + move
@@ -242,6 +263,16 @@ local function disableFreeCam()
         freeCamPart:Destroy()
         freeCamPart = nil
     end
+    if basePart then
+        basePart:Destroy()
+        basePart = nil
+    end
+
+    -- Volta o player pra posição inicial
+    if savedPosition and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        localPlayer.Character.HumanoidRootPart.CFrame = savedPosition
+    end
+
     if localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
         workspace.CurrentCamera.CameraSubject = localPlayer.Character.Humanoid
     end
