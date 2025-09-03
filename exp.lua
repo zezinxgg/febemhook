@@ -176,6 +176,7 @@ end
 -- // Serviços
 local wsp = game:GetService("Workspace")
 local UIS = game:GetService("UserInputService")
+
 local freeCamSettings = {
     enabled = false,
     speed = 50, -- Velocidade de movimento
